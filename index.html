@@ -1,0 +1,258 @@
+﻿<!DOCTYPE html>
+<html>
+<title>Match 3 test game</title>
+<body>
+
+<canvas id="myCanvas" width="160" height="160" >
+Your browser does not support the HTML5 canvas tag.</canvas>
+
+<script>
+
+
+	function getMousePos(canvas, evt) {
+        var rect = canvas.getBoundingClientRect();
+        return {
+          x: evt.clientX - rect.left,
+          y: evt.clientY - rect.top
+        };
+	}
+	
+	function drawBox(selection){
+		context.save();
+
+		var val = map[selection.x][selection.y].value;
+		if(val == 0){
+			context.fillStyle = 'rgb(' + 255 + ',' + 0 + ',' + 0 + ')';
+		}
+		if(val == 1){
+			context.fillStyle = 'rgb(' + 0 + ',' + 255 + ',' + 0 + ')';
+		}
+		if(val == 2){
+			context.fillStyle = 'rgb(' + 0 + ',' + 0 + ',' + 255 + ')';
+		}
+		if(val == 3){
+			context.fillStyle = 'rgb(' + 0 + ',' + 255 + ',' + 255 + ')';
+		}
+		if(val == 4){
+			context.fillStyle = 'rgb(' + 255 + ',' + 0 + ',' + 255 + ')';
+		}
+		if(val == 5){
+			context.fillStyle = 'rgb(' + 255 + ',' + 255 + ',' + 0 + ')';
+		}
+		if(val == 6){
+			context.fillStyle = 'rgb(' + 255 + ',' + 255 + ',' + 255 + ')';
+		}
+		if(val == 7){
+			context.fillStyle = 'rgb(' + 0 + ',' + 0 + ',' + 0 + ')';
+		}
+
+		context.fillRect(selection.x*20,selection.y*20,19,19);
+		context.restore();
+	}
+
+	function fillEmptyMap(array, width, height) {
+
+		for (var x = 0; x < width; x++) {
+		array[x] = [];
+			for (var y = 0; y < height; y++) {
+				array[x][y] = {value: Math.floor(Math.random() * 8), remove:0};
+       	 		}
+		}
+	}
+
+
+	function gridMap(map){
+
+
+
+		var mapWidth = 8;
+		var mapHeight = 8;
+		var selection = {x:0,y:0}
+		fillEmptyMap(map, mapWidth, mapHeight);
+
+
+		context.clearRect(0, 0, canvas.width, canvas.height);
+		for (var i = 0; i < mapWidth; i++) {
+			for (var j = 0; j < mapHeight; j++) {
+				selection.x = i;				
+				selection.y = j;
+				drawBox(selection);				
+			}
+		}
+	}
+
+
+
+	function checkObject(newSelection){
+		if((newSelection.x == (selected.x - 1) && newSelection.y == selected.y) ||
+			(newSelection.x == (selected.x + 1) && newSelection.y == selected.y)){
+			var value = map[newSelection.x][newSelection.y].value;
+
+			map[newSelection.x][newSelection.y].value = map[selected.x][selected.y].value;
+			map[selected.x][selected.y].value = value;
+			drawBox(newSelection);
+			drawBox(selected);
+		} else
+		if((newSelection.y == (selected.y - 1) && newSelection.x == selected.x) ||
+			(newSelection.y == (selected.y + 1) && newSelection.x == selected.x)){
+			var value = map[newSelection.x][newSelection.y].value;
+
+			map[newSelection.x][newSelection.y].value = map[selected.x][selected.y].value;
+			map[selected.x][selected.y].value = value;
+			drawBox(newSelection);
+			drawBox(selected);
+		}
+		selected = newSelection;
+	}
+
+	function match3loop(){
+		var match = 0;
+		var matchingValue = -1;
+		var matchStart = 0;
+		var found = false;
+
+
+		// row check
+		for (var i = 7; i >= 0; i--) {
+			match = 0;
+			matchStart = 0;
+			matchingValue = -1;
+			notMatch = true;
+
+			for (var j = 0; j < 8; j++) {
+				if(map[j][i].value == matchingValue){
+					match++;
+				}else{
+					notMatch = true;
+				}
+				if(notMatch){
+					if(match >= 3){
+						for (var k = matchStart; k < j; k++) {
+							map[k][i].remove = 1;
+							found = true;
+						}	
+					}
+
+					matchingValue = map[j][i].value;
+					match = 1;
+					matchStart = j;
+					notMatch = false;
+				}
+				
+				
+			}
+			if(match >= 3){
+				for (var k = matchStart; k < j; k++) {
+					map[k][i].remove = 1;
+					found = true;
+				}	
+			}
+		}
+		// colum check
+		for (var i = 0; i < 8; i++) {
+			match = 0;
+			matchStart = 0;
+			matchingValue = -1;
+			notMatch = true;
+
+			for (var j = 7; j >= 0; j--) {
+				if(map[i][j].value == matchingValue){
+					match++;
+				}else{
+					notMatch = true;
+				}
+				if(notMatch){
+					if(match >= 3){
+						for (var k = matchStart; k > j; k--) {
+							map[i][k].remove = 1;
+							found = true;
+						}	
+					}
+
+					matchingValue = map[i][j].value;
+					match = 1;
+					matchStart = j;
+					notMatch = false;
+				}
+				
+				
+			}
+			if(match >= 3){
+				for (var k = matchStart; k > j; k--) {
+					map[i][k].remove = 1;
+					found = true;
+				}	
+			}
+		}
+
+		
+	return found;
+	}
+
+	function removeMatched(){
+		var selection = {x:0,y:0}
+		var found = false;
+
+		for (var i = 0; i < 8; i++) {
+			for (var j = 7; j >= 0; j--) {
+				if(map[i][j].remove == 1){
+						for (var k = j; k >= 0; k--) {
+							if(map[i][k].remove == 0){
+								found = true;
+								break;
+							}
+						}
+						if(found){
+							map[i][j].remove = 0;
+							map[i][j].value = map[i][k].value;
+							map[i][k].remove = 1;
+							found = false;		
+						}else{
+							map[i][j].remove = 0;
+							map[i][j].value =  Math.floor(Math.random() * 8);
+						}
+
+	
+				}
+				selection.x = i;				
+				selection.y = j;
+				drawBox(selection);	
+			}
+		}
+	}
+
+	
+	var canvas = document.getElementById('myCanvas');
+	var context = canvas.getContext('2d');
+	var map = [ [] ];
+
+	var selected = {x:0,y:0};
+
+	canvas.addEventListener('mousedown', function(evt) {
+		var mousePos = getMousePos(canvas, evt);
+		var newSelection = {x:0,y:0};
+		if(mousePos.x >= 0 && mousePos.x <= 8*20 && mousePos.y >= 0 && mousePos.y <= 8*20){
+			newSelection.x = Math.floor(mousePos.x/20);	
+			newSelection.y = Math.floor(mousePos.y/20);				
+			checkObject(newSelection);
+
+			while(match3loop()){
+
+				removeMatched();
+			}
+			
+		}
+		
+	}, false);
+
+	gridMap(map);
+
+	while(match3loop()){
+		removeMatched();
+	}
+
+
+</script> 
+
+</body>
+</html>
